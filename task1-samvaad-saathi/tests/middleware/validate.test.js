@@ -45,6 +45,9 @@ describe('validateEvaluatePayload', () => {
     const { req, res, next } = makeReqRes(body);
     validateEvaluatePayload(req, res, next);
     expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: expect.stringMatching(/role_config/) })
+    );
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -53,6 +56,9 @@ describe('validateEvaluatePayload', () => {
     const { req, res, next } = makeReqRes(body);
     validateEvaluatePayload(req, res, next);
     expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: expect.stringMatching(/audio_metadata/) })
+    );
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -61,6 +67,9 @@ describe('validateEvaluatePayload', () => {
     const { req, res, next } = makeReqRes(body);
     validateEvaluatePayload(req, res, next);
     expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: expect.stringMatching(/transcript/) })
+    );
     expect(next).not.toHaveBeenCalled();
   });
 });

@@ -5,7 +5,7 @@ const evaluateSchema = Joi.object({
   user_id: Joi.string().required(),
   role_config: Joi.object({
     role: Joi.string().required(),
-    thresholds: Joi.object().pattern(Joi.string(), Joi.number().min(1).max(10)).min(1).required()
+    thresholds: Joi.object().pattern(Joi.string(), Joi.number().min(0).max(10)).min(1).required()
   }).required(),
   transcript: Joi.string().required(),
   audio_metadata: Joi.object({
