@@ -59,4 +59,21 @@ describe('mockAIGrade', () => {
     await jest.runAllTimersAsync();
     await expect(promise).resolves.toBeDefined();
   });
+
+  it('returns score of 1 (not 0) when Math.random() returns 0', async () => {
+    jest.spyOn(Math, 'random')
+      .mockReturnValueOnce(0.5)  // failure check — 0.5 >= 0.1, no throw
+      .mockReturnValueOnce(0)    // knowledge score
+      .mockReturnValueOnce(0)    // pacing score
+      .mockReturnValueOnce(0);   // filler_word_usage score
+    const promise = mockAIGrade({
+      transcript: 'test',
+      audio_metadata: { duration_seconds: 5, filler_word_count: 1 }
+    });
+    await jest.runAllTimersAsync();
+    const scores = await promise;
+    expect(scores.knowledge).toBe(1);
+    expect(scores.pacing).toBe(1);
+    expect(scores.filler_word_usage).toBe(1);
+  });
 });

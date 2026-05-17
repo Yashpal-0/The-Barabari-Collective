@@ -1,5 +1,5 @@
 function randomScore() {
-  return Math.ceil(Math.random() * 10);
+  return Math.floor(Math.random() * 10) + 1;
 }
 
 async function mockAIGrade({ transcript, audio_metadata }) {
