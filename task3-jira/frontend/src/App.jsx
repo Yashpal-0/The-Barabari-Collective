@@ -7,7 +7,7 @@ import TicketModal from './components/TicketModal';
 export default function App() {
   const [tickets, setTickets] = useState([]);
   const [filters, setFilters] = useState({});
-  const [modalTicket, setModalTicket] = useState(undefined); // undefined=closed, null=new, ticket=edit
+  const [modal, setModal] = useState(null); // null=closed, { ticket, parentId? }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -25,6 +25,10 @@ export default function App() {
 
   useEffect(() => { fetchTickets(); }, [fetchTickets]);
 
+  function openNew() { setModal({ ticket: null }); }
+  function openEdit(ticket) { setModal({ ticket }); }
+  function openChild(parentId) { setModal({ ticket: null, parentId }); }
+
   function handleSaved(ticket, isNew) {
     if (isNew) {
       setTickets((prev) => [...prev, ticket]);
@@ -38,41 +42,96 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      <header className="bg-white border-b border-gray-200 px-6 py-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Kanban Board</h1>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      {/* Header */}
+      <header style={{
+        borderBottom: '1px solid var(--border)',
+        background: 'var(--surface)',
+        padding: '0 24px',
+        height: 56,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 16,
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            width: 28, height: 28,
+            background: 'var(--accent)',
+            borderRadius: 6,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <rect x="1" y="1" width="5" height="5" rx="1" fill="#09090c"/>
+              <rect x="8" y="1" width="5" height="5" rx="1" fill="#09090c"/>
+              <rect x="1" y="8" width="5" height="5" rx="1" fill="#09090c"/>
+              <rect x="8" y="8" width="5" height="2" rx="1" fill="#09090c"/>
+            </svg>
+          </div>
+          <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: '-0.3px', color: 'var(--text)' }}>
+            Forge
+          </span>
+        </div>
+        <div style={{ flex: 1 }} />
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 11,
+          color: 'var(--text-muted)',
+          background: 'var(--surface-2)',
+          padding: '3px 8px',
+          borderRadius: 4,
+          border: '1px solid var(--border)',
+        }}>
+          {tickets.length} tickets
+        </span>
       </header>
 
-      <main className="px-6">
+      <main style={{ padding: '24px' }}>
         <FilterBar
           filters={filters}
           onChange={setFilters}
-          onCreateClick={() => setModalTicket(null)}
+          onCreateClick={openNew}
+          ticketCount={tickets.length}
         />
 
         {error && (
-          <div className="mb-4 text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-lg text-sm">
+          <div style={{
+            marginBottom: 16,
+            padding: '10px 14px',
+            background: 'rgba(248, 113, 113, 0.08)',
+            border: '1px solid rgba(248, 113, 113, 0.25)',
+            borderRadius: 8,
+            color: 'var(--p-critical)',
+            fontSize: 13,
+          }}>
             {error}
           </div>
         )}
 
         {loading ? (
-          <p className="text-gray-500 text-center py-12">Loading…</p>
+          <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: 13 }}>
+            loading forge...
+          </div>
         ) : (
           <KanbanBoard
             tickets={tickets}
             setTickets={setTickets}
-            onTicketClick={(ticket) => setModalTicket(ticket)}
+            onTicketClick={openEdit}
           />
         )}
       </main>
 
-      {modalTicket !== undefined && (
+      {modal && (
         <TicketModal
-          ticket={modalTicket}
-          onClose={() => setModalTicket(undefined)}
+          ticket={modal.ticket}
+          parentId={modal.parentId}
+          onClose={() => setModal(null)}
           onSaved={handleSaved}
           onDeleted={handleDeleted}
+          onCreateChild={openChild}
+          onTicketClick={openEdit}
         />
       )}
     </div>

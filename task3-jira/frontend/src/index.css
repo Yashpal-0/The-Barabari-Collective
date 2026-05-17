@@ -1,6 +1,74 @@
 @import "tailwindcss";
 
-body {
-  margin: 0;
-  background: #f1f5f9;
+:root {
+  --bg:          #09090c;
+  --surface:     #111115;
+  --surface-2:   #1a1a1f;
+  --surface-3:   #222228;
+  --border:      #2c2c36;
+  --border-2:    #3a3a46;
+  --text:        #eeeef5;
+  --text-muted:  #7070a0;
+  --text-dim:    #44445a;
+  --accent:      #f5a623;
+  --accent-glow: rgba(245, 166, 35, 0.15);
+  --accent-dim:  rgba(245, 166, 35, 0.08);
+
+  --p-low:      #4ade80;
+  --p-medium:   #facc15;
+  --p-high:     #fb923c;
+  --p-critical: #f87171;
+
+  --font-sans: 'Syne', sans-serif;
+  --font-mono: 'Syne Mono', monospace;
 }
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* subtle noise overlay on body */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+#root { position: relative; z-index: 1; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+/* animations */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.animate-fade-in { animation: fadeSlideIn 0.2s ease both; }
+.animate-scale-in { animation: scaleIn 0.18s ease both; }

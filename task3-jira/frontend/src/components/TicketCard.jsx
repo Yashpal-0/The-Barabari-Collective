@@ -1,13 +1,22 @@
 import { Draggable } from '@hello-pangea/dnd';
 
-const PRIORITY_COLORS = {
-  low: 'bg-green-100 text-green-800',
-  medium: 'bg-yellow-100 text-yellow-800',
-  high: 'bg-orange-100 text-orange-800',
-  critical: 'bg-red-100 text-red-800'
+const PRIORITY_COLOR = {
+  low:      'var(--p-low)',
+  medium:   'var(--p-medium)',
+  high:     'var(--p-high)',
+  critical: 'var(--p-critical)',
+};
+
+const PRIORITY_BG = {
+  low:      'rgba(74, 222, 128, 0.08)',
+  medium:   'rgba(250, 204, 21, 0.08)',
+  high:     'rgba(251, 146, 60, 0.08)',
+  critical: 'rgba(248, 113, 113, 0.08)',
 };
 
 export default function TicketCard({ ticket, index, onClick }) {
+  const priorityColor = PRIORITY_COLOR[ticket.priority] || 'var(--border)';
+
   return (
     <Draggable draggableId={String(ticket.id)} index={index}>
       {(provided, snapshot) => (
@@ -16,23 +25,116 @@ export default function TicketCard({ ticket, index, onClick }) {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={() => onClick(ticket)}
-          className={`bg-white rounded-lg p-3 mb-2 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow ${
-            snapshot.isDragging ? 'shadow-lg rotate-1' : ''
-          }`}
+          className="animate-fade-in"
+          style={{
+            ...provided.draggableProps.style,
+            marginBottom: 6,
+            background: snapshot.isDragging ? 'var(--surface-3)' : 'var(--surface-2)',
+            border: `1px solid ${snapshot.isDragging ? 'var(--border-2)' : 'var(--border)'}`,
+            borderLeft: `3px solid ${priorityColor}`,
+            borderRadius: 8,
+            padding: '10px 12px',
+            cursor: 'pointer',
+            transition: snapshot.isDragging ? 'none' : 'background 0.15s, border-color 0.15s, box-shadow 0.15s',
+            boxShadow: snapshot.isDragging
+              ? `0 8px 24px rgba(0,0,0,0.5), 0 0 0 1px ${priorityColor}22`
+              : 'none',
+            transform: snapshot.isDragging
+              ? `${provided.draggableProps.style?.transform || ''} rotate(1.5deg)`
+              : provided.draggableProps.style?.transform,
+          }}
+          onMouseOver={e => {
+            if (!snapshot.isDragging) {
+              e.currentTarget.style.background = 'var(--surface-3)';
+              e.currentTarget.style.borderColor = 'var(--border-2)';
+            }
+          }}
+          onMouseOut={e => {
+            if (!snapshot.isDragging) {
+              e.currentTarget.style.background = 'var(--surface-2)';
+              e.currentTarget.style.borderColor = 'var(--border)';
+            }
+          }}
         >
-          <p className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">{ticket.title}</p>
-          <div className="flex items-center justify-between gap-2">
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLORS[ticket.priority] || 'bg-gray-100 text-gray-600'}`}>
+          {/* Ticket ID + priority badge */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              color: 'var(--text-dim)',
+              letterSpacing: '0.05em',
+            }}>
+              #{String(ticket.id).padStart(3, '0')}
+            </span>
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 9,
+              fontWeight: 600,
+              color: priorityColor,
+              background: PRIORITY_BG[ticket.priority] || 'transparent',
+              padding: '2px 6px',
+              borderRadius: 4,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}>
               {ticket.priority}
             </span>
-            {ticket.assignee && (
-              <span className="text-xs text-gray-500 truncate">{ticket.assignee}</span>
-            )}
           </div>
-          {ticket.team_tag && (
-            <span className="mt-1 inline-block text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
-              {ticket.team_tag}
-            </span>
+
+          {/* Title */}
+          <p style={{
+            margin: 0,
+            fontSize: 13,
+            fontWeight: 600,
+            color: 'var(--text)',
+            lineHeight: 1.4,
+            letterSpacing: '-0.1px',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}>
+            {ticket.title}
+          </p>
+
+          {/* Meta row */}
+          {(ticket.assignee || ticket.team_tag || ticket.parent_id) && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
+              {ticket.parent_id && (
+                <span style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 9,
+                  color: 'var(--accent)',
+                  background: 'var(--accent-dim)',
+                  padding: '2px 5px',
+                  borderRadius: 3,
+                }}>
+                  ↳ #{ticket.parent_id}
+                </span>
+              )}
+              {ticket.team_tag && (
+                <span style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 9,
+                  color: 'var(--text-muted)',
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  padding: '2px 5px',
+                  borderRadius: 3,
+                }}>
+                  {ticket.team_tag}
+                </span>
+              )}
+              {ticket.assignee && (
+                <span style={{
+                  fontSize: 10,
+                  color: 'var(--text-muted)',
+                  marginLeft: 'auto',
+                }}>
+                  {ticket.assignee}
+                </span>
+              )}
+            </div>
           )}
         </div>
       )}
