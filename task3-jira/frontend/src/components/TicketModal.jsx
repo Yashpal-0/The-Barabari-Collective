@@ -148,8 +148,10 @@ export default function TicketModal({ ticket, parentId, onClose, onSaved, onDele
           width: '100%', maxWidth: 600,
           maxHeight: '90vh',
           background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderTop: `2px solid ${priorityColor}`,
+          borderTop:    `2px solid ${priorityColor}`,
+          borderRight:  '1px solid var(--border)',
+          borderBottom: '1px solid var(--border)',
+          borderLeft:   '1px solid var(--border)',
           borderRadius: 14,
           overflowY: 'auto',
           display: 'flex', flexDirection: 'column',
@@ -391,17 +393,19 @@ export default function TicketModal({ ticket, parentId, onClose, onSaved, onDele
                         alignItems: 'center',
                         gap: 10,
                         background: 'var(--surface-2)',
-                        border: '1px solid var(--border)',
-                        borderLeft: `3px solid ${PRIORITY_COLOR[c.priority] || 'var(--border)'}`,
+                        borderTop:    '1px solid var(--border)',
+                        borderRight:  '1px solid var(--border)',
+                        borderBottom: '1px solid var(--border)',
+                        borderLeft:   `3px solid ${PRIORITY_COLOR[c.priority] || 'var(--border)'}`,
                         borderRadius: 7,
                         padding: '8px 12px',
                         cursor: 'pointer',
                         textAlign: 'left',
                         width: '100%',
-                        transition: 'background 0.15s, border-color 0.15s',
+                        transition: 'background 0.15s, border-top-color 0.15s, border-right-color 0.15s, border-bottom-color 0.15s',
                       }}
-                      onMouseOver={e => { e.currentTarget.style.background = 'var(--surface-3)'; e.currentTarget.style.borderColor = 'var(--border-2)'; }}
-                      onMouseOut={e => { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+                      onMouseOver={e => { e.currentTarget.style.background = 'var(--surface-3)'; e.currentTarget.style.borderTopColor = 'var(--border-2)'; e.currentTarget.style.borderRightColor = 'var(--border-2)'; e.currentTarget.style.borderBottomColor = 'var(--border-2)'; }}
+                      onMouseOut={e => { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.borderTopColor = 'var(--border)'; e.currentTarget.style.borderRightColor = 'var(--border)'; e.currentTarget.style.borderBottomColor = 'var(--border)'; }}
                     >
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-dim)', flexShrink: 0 }}>
                         #{String(c.id).padStart(3, '0')}

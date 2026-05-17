@@ -58,8 +58,10 @@ export default function KanbanBoard({ tickets, setTickets, onTicketClick }) {
                 marginBottom: 10,
                 padding: '8px 10px',
                 background: 'var(--surface)',
-                border: '1px solid var(--border)',
-                borderTop: `2px solid ${col.color}`,
+                borderTop:    `2px solid ${col.color}`,
+                borderRight:  '1px solid var(--border)',
+                borderBottom: '1px solid var(--border)',
+                borderLeft:   '1px solid var(--border)',
                 borderRadius: '0 0 6px 6px',
               }}>
                 <span style={{

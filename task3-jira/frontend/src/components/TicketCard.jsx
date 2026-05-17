@@ -30,8 +30,10 @@ export default function TicketCard({ ticket, index, onClick }) {
             ...provided.draggableProps.style,
             marginBottom: 6,
             background: snapshot.isDragging ? 'var(--surface-3)' : 'var(--surface-2)',
-            border: `1px solid ${snapshot.isDragging ? 'var(--border-2)' : 'var(--border)'}`,
-            borderLeft: `3px solid ${priorityColor}`,
+            borderTop:    `1px solid ${snapshot.isDragging ? 'var(--border-2)' : 'var(--border)'}`,
+            borderRight:  `1px solid ${snapshot.isDragging ? 'var(--border-2)' : 'var(--border)'}`,
+            borderBottom: `1px solid ${snapshot.isDragging ? 'var(--border-2)' : 'var(--border)'}`,
+            borderLeft:   `3px solid ${priorityColor}`,
             borderRadius: 8,
             padding: '10px 12px',
             cursor: 'pointer',
@@ -46,13 +48,17 @@ export default function TicketCard({ ticket, index, onClick }) {
           onMouseOver={e => {
             if (!snapshot.isDragging) {
               e.currentTarget.style.background = 'var(--surface-3)';
-              e.currentTarget.style.borderColor = 'var(--border-2)';
+              e.currentTarget.style.borderTopColor    = 'var(--border-2)';
+              e.currentTarget.style.borderRightColor  = 'var(--border-2)';
+              e.currentTarget.style.borderBottomColor = 'var(--border-2)';
             }
           }}
           onMouseOut={e => {
             if (!snapshot.isDragging) {
               e.currentTarget.style.background = 'var(--surface-2)';
-              e.currentTarget.style.borderColor = 'var(--border)';
+              e.currentTarget.style.borderTopColor    = 'var(--border)';
+              e.currentTarget.style.borderRightColor  = 'var(--border)';
+              e.currentTarget.style.borderBottomColor = 'var(--border)';
             }
           }}
         >
