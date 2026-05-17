@@ -1,6 +1,7 @@
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import TicketCard from './TicketCard';
 import { moveTicket } from '../api';
+import { reorder } from '../lib/reorder';
 
 const COLUMNS = [
   { id: 'backlog',     label: 'Backlog',      color: '#44445a' },
@@ -20,25 +21,17 @@ export default function KanbanBoard({ tickets, setTickets, onTicketClick }) {
     if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
     const ticketId = parseInt(draggableId);
-    const newStatus = destination.droppableId;
-    const newPosition = destination.index;
-    const oldStatus = source.droppableId;
-    const oldPosition = source.index;
+    let snapshot;
 
-    setTickets((prev) =>
-      prev.map((t) =>
-        t.id === ticketId ? { ...t, status: newStatus, position: newPosition } : t
-      )
-    );
+    setTickets((prev) => {
+      snapshot = prev;
+      return reorder(prev, ticketId, source, destination);
+    });
 
     try {
-      await moveTicket(ticketId, newStatus, newPosition);
+      await moveTicket(ticketId, destination.droppableId, destination.index);
     } catch {
-      setTickets((prev) =>
-        prev.map((t) =>
-          t.id === ticketId ? { ...t, status: oldStatus, position: oldPosition } : t
-        )
-      );
+      setTickets(snapshot);
     }
   }
 
