@@ -2,6 +2,8 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const helmet = require('helmet');
+const { Worker } = require('bullmq');
+const { runJob } = require('./workers/jobHandler');
 
 const app = express();
 const server = http.createServer(app);
@@ -16,6 +18,20 @@ io.on('connection', (socket) => {
 });
 
 app.use('/execute', require('./routes/execute'));
+
+const redisConnection = {
+  host: process.env.REDIS_HOST || 'localhost',
+  port: parseInt(process.env.REDIS_PORT || '6379')
+};
+
+const worker = new Worker('executions', (job) => runJob(job, io), {
+  connection: redisConnection,
+  concurrency: 5
+});
+
+worker.on('failed', (job, err) => {
+  console.error(`Job ${job?.id} failed:`, err.message);
+});
 
 const PORT = process.env.PORT || 3001;
 if (require.main === module) {
