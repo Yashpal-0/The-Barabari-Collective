@@ -37,7 +37,9 @@ export default function TicketCard({ ticket, index, onClick }) {
             borderRadius: 8,
             padding: '10px 12px',
             cursor: 'pointer',
-            transition: snapshot.isDragging ? 'none' : 'background 0.15s, border-color 0.15s, box-shadow 0.15s',
+            transition: snapshot.isDragging
+              ? 'none'
+              : [provided.draggableProps.style?.transition, 'background 0.15s, border-top-color 0.15s, border-right-color 0.15s, border-bottom-color 0.15s'].filter(Boolean).join(', '),
             boxShadow: snapshot.isDragging
               ? `0 8px 24px rgba(0,0,0,0.5), 0 0 0 1px ${priorityColor}22`
               : 'none',

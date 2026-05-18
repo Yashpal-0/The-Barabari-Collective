@@ -1,5 +1,4 @@
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
-import { flushSync } from 'react-dom';
 import TicketCard from './TicketCard';
 import { moveTicket } from '../api';
 import { reorder } from '../lib/reorder';
