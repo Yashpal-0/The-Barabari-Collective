@@ -1,4 +1,5 @@
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import { flushSync } from 'react-dom';
 import TicketCard from './TicketCard';
 import { moveTicket } from '../api';
 import { reorder } from '../lib/reorder';
@@ -21,11 +22,12 @@ export default function KanbanBoard({ tickets, setTickets, onTicketClick }) {
     if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
     const ticketId = parseInt(draggableId);
-    let snapshot;
+    const snapshot = tickets; // capture before update — safe: tickets is from current render closure
 
-    setTickets((prev) => {
-      snapshot = prev;
-      return reorder(prev, ticketId, source, destination);
+    // flushSync: force synchronous DOM update so @hello-pangea/dnd's drop animation
+    // reads the correct final card position (React 18 batches async by default)
+    flushSync(() => {
+      setTickets(reorder(tickets, ticketId, source, destination));
     });
 
     try {
