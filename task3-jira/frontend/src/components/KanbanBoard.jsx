@@ -21,13 +21,9 @@ export default function KanbanBoard({ tickets, setTickets, onTicketClick }) {
     if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
     const ticketId = parseInt(draggableId);
-    const snapshot = tickets; // capture before update — safe: tickets is from current render closure
+    const snapshot = tickets;
 
-    // flushSync: force synchronous DOM update so @hello-pangea/dnd's drop animation
-    // reads the correct final card position (React 18 batches async by default)
-    flushSync(() => {
-      setTickets(reorder(tickets, ticketId, source, destination));
-    });
+    setTickets(reorder(tickets, ticketId, source, destination));
 
     try {
       await moveTicket(ticketId, destination.droppableId, destination.index);
