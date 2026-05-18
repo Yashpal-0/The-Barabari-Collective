@@ -1,10 +1,19 @@
-jest.mock('../src/db', () => ({
-  pool: { query: jest.fn() }
-}));
+jest.mock('../src/db', () => {
+  const client = { query: jest.fn(), release: jest.fn() };
+  return {
+    pool: {
+      query: jest.fn(),
+      connect: jest.fn(() => Promise.resolve(client)),
+    },
+    __client: client,
+  };
+});
 
 const request = require('supertest');
 const { app } = require('../src/app');
-const { pool } = require('../src/db');
+const db = require('../src/db');
+const { pool } = db;
+const client = db.__client;
 
 beforeEach(() => jest.clearAllMocks());
 
@@ -94,27 +103,76 @@ describe('PATCH /api/tickets/:id', () => {
 });
 
 describe('PATCH /api/tickets/:id/move', () => {
-  it('moves ticket to new status and position', async () => {
-    const moved = { id: 1, status: 'done', position: 0 };
-    pool.query.mockResolvedValueOnce({ rows: [moved] });
+  const rowNumberCalls = () =>
+    client.query.mock.calls.filter(([sql]) => /ROW_NUMBER/i.test(sql));
+
+  it('cross-column move re-sequences BOTH destination and source columns', async () => {
+    // old status 'todo', moving to 'done' — both columns must be renumbered
+    // so no two cards in a column share a position (the duplicate-position bug)
+    client.query
+      .mockResolvedValueOnce({})                                    // BEGIN
+      .mockResolvedValueOnce({ rows: [{ status: 'todo' }] })        // SELECT ... FOR UPDATE
+      .mockResolvedValueOnce({})                                    // UPDATE moved ticket
+      .mockResolvedValueOnce({})                                    // re-sequence destination
+      .mockResolvedValueOnce({})                                    // re-sequence source
+      .mockResolvedValueOnce({ rows: [{ id: 1, status: 'done', position: 0 }] }) // SELECT final
+      .mockResolvedValueOnce({});                                   // COMMIT
+
     const res = await request(app)
       .patch('/api/tickets/1/move')
       .send({ status: 'done', position: 0 });
+
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('done');
+
+    const reseq = rowNumberCalls();
+    expect(reseq).toHaveLength(2);                                  // dest + source
+    expect(reseq.some(([, p]) => p && p.includes('done'))).toBe(true);
+    expect(reseq.some(([, p]) => p && p.includes('todo'))).toBe(true);
+
+    const sqls = client.query.mock.calls.map(([s]) => s);
+    expect(sqls).toContain('BEGIN');
+    expect(sqls).toContain('COMMIT');
+    expect(client.release).toHaveBeenCalled();
+  });
+
+  it('same-column move re-sequences only that column', async () => {
+    client.query
+      .mockResolvedValueOnce({})                                    // BEGIN
+      .mockResolvedValueOnce({ rows: [{ status: 'todo' }] })        // SELECT ... FOR UPDATE
+      .mockResolvedValueOnce({})                                    // UPDATE moved ticket
+      .mockResolvedValueOnce({})                                    // re-sequence destination
+      .mockResolvedValueOnce({ rows: [{ id: 1, status: 'todo', position: 2 }] }) // SELECT final
+      .mockResolvedValueOnce({});                                   // COMMIT
+
+    const res = await request(app)
+      .patch('/api/tickets/1/move')
+      .send({ status: 'todo', position: 2 });
+
+    expect(res.status).toBe(200);
+    expect(rowNumberCalls()).toHaveLength(1);                       // dest only, no source
   });
 
   it('returns 400 when status missing', async () => {
     const res = await request(app).patch('/api/tickets/1/move').send({ position: 0 });
     expect(res.status).toBe(400);
+    expect(pool.connect).not.toHaveBeenCalled();
   });
 
-  it('returns 404 when ticket not found', async () => {
-    pool.query.mockResolvedValueOnce({ rows: [] });
+  it('returns 404 and rolls back when ticket not found', async () => {
+    client.query
+      .mockResolvedValueOnce({})                                    // BEGIN
+      .mockResolvedValueOnce({ rows: [] })                          // SELECT ... FOR UPDATE -> none
+      .mockResolvedValueOnce({});                                   // ROLLBACK
+
     const res = await request(app)
       .patch('/api/tickets/999/move')
       .send({ status: 'todo', position: 1 });
+
     expect(res.status).toBe(404);
+    const sqls = client.query.mock.calls.map(([s]) => s);
+    expect(sqls).toContain('ROLLBACK');
+    expect(client.release).toHaveBeenCalled();
   });
 });
 

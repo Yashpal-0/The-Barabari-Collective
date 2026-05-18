@@ -49,16 +49,63 @@ router.get('/:id', async (req, res, next) => {
 });
 
 router.patch('/:id/move', validateMove, async (req, res, next) => {
+  const client = await pool.connect();
   try {
     const id = parseInt(req.params.id);
     const { status, position } = req.body;
-    const { rows } = await pool.query(
-      'UPDATE tickets SET status=$1, position=$2 WHERE id=$3 RETURNING *',
+    await client.query('BEGIN');
+
+    const { rows: cur } = await client.query(
+      'SELECT status FROM tickets WHERE id = $1 FOR UPDATE', [id]
+    );
+    if (!cur.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+    const oldStatus = cur[0].status;
+
+    await client.query(
+      'UPDATE tickets SET status = $1, position = $2 WHERE id = $3',
       [status, position, id]
     );
-    if (!rows.length) return res.status(404).json({ error: 'Ticket not found' });
+
+    // Re-sequence the destination column so every card gets a unique,
+    // gap-free 0..n position. The moved card sorts just before whatever
+    // currently sits at `position` (the - 0.5 nudge), matching the
+    // frontend reorder() splice semantics.
+    await client.query(
+      `WITH ordered AS (
+         SELECT id, ROW_NUMBER() OVER (
+           ORDER BY CASE WHEN id = $2 THEN $3::numeric - 0.5 ELSE position END,
+                    created_at
+         ) - 1 AS rn
+         FROM tickets WHERE status = $1
+       )
+       UPDATE tickets t SET position = o.rn FROM ordered o WHERE t.id = o.id`,
+      [status, id, position]
+    );
+
+    // Moved out of its old column → close the gap it left behind.
+    if (oldStatus !== status) {
+      await client.query(
+        `WITH ordered AS (
+           SELECT id, ROW_NUMBER() OVER (ORDER BY position, created_at) - 1 AS rn
+           FROM tickets WHERE status = $1
+         )
+         UPDATE tickets t SET position = o.rn FROM ordered o WHERE t.id = o.id`,
+        [oldStatus]
+      );
+    }
+
+    const { rows } = await client.query('SELECT * FROM tickets WHERE id = $1', [id]);
+    await client.query('COMMIT');
     res.json(rows[0]);
-  } catch (err) { next(err); }
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    next(err);
+  } finally {
+    client.release();
+  }
 });
 
 router.patch('/:id', validateUpdate, async (req, res, next) => {
