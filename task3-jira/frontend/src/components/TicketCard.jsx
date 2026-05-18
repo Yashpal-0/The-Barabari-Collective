@@ -37,7 +37,12 @@ export default function TicketCard({ ticket, index, onClick }) {
             borderRadius: 8,
             padding: '10px 12px',
             cursor: 'pointer',
-            transition: snapshot.isDragging
+            // isDragging is true for BOTH active-drag AND drop-animating phases.
+            // During drop-animating the library relies on the CSS transform
+            // transition firing transitionend → onMoveEnd → flushSync(dropAnimationFinishedAction)
+            // → DROP_COMPLETE → onDragEnd. Suppressing the transition with 'none'
+            // here kills that event chain and onDragEnd never fires.
+            transition: (snapshot.isDragging && !snapshot.isDropAnimating)
               ? 'none'
               : [provided.draggableProps.style?.transition, 'background 0.15s, border-top-color 0.15s, border-right-color 0.15s, border-bottom-color 0.15s'].filter(Boolean).join(', '),
             boxShadow: snapshot.isDragging
