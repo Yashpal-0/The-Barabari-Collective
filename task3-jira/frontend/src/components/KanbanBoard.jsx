@@ -24,19 +24,16 @@ export default function KanbanBoard({ tickets, setTickets, onTicketClick }) {
     const ticketId = parseInt(draggableId);
     const snapshot = tickets;
 
-    // @hello-pangea/dnd runs onDragEnd inside its DROP_COMPLETE dispatch but does
-    // NOT wrap this callback in flushSync. Under React 19 automatic batching +
-    // StrictMode, a plain setState here is deferred past the library's drag
-    // teardown, so the moved card is absent for that render (reappears only on
-    // the next unrelated render). flushSync applies the update synchronously,
-    // keeping the data tree consistent with the library's drop reconciliation.
+    const reordered = reorder(tickets, ticketId, source, destination);
+
     flushSync(() => {
-      setTickets(reorder(tickets, ticketId, source, destination));
+      setTickets(reordered);
     });
 
     try {
       await moveTicket(ticketId, destination.droppableId, destination.index);
-    } catch {
+    } catch (err) {
+      console.error('[dnd] moveTicket FAILED — reverting', err);
       setTickets(snapshot);
     }
   }

@@ -1,4 +1,5 @@
 import { Draggable } from '@hello-pangea/dnd';
+import { createPortal } from 'react-dom';
 
 const PRIORITY_COLOR = {
   low:      'var(--p-low)',
@@ -19,56 +20,56 @@ export default function TicketCard({ ticket, index, onClick }) {
 
   return (
     <Draggable draggableId={String(ticket.id)} index={index}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          onClick={() => onClick(ticket)}
-          className="animate-fade-in"
-          style={{
-            ...provided.draggableProps.style,
-            marginBottom: 6,
-            background: snapshot.isDragging ? 'var(--surface-3)' : 'var(--surface-2)',
-            borderTop:    `1px solid ${snapshot.isDragging ? 'var(--border-2)' : 'var(--border)'}`,
-            borderRight:  `1px solid ${snapshot.isDragging ? 'var(--border-2)' : 'var(--border)'}`,
-            borderBottom: `1px solid ${snapshot.isDragging ? 'var(--border-2)' : 'var(--border)'}`,
-            borderLeft:   `3px solid ${priorityColor}`,
-            borderRadius: 8,
-            padding: '10px 12px',
-            cursor: 'pointer',
-            // isDragging is true for BOTH active-drag AND drop-animating phases.
-            // During drop-animating the library relies on the CSS transform
-            // transition firing transitionend → onMoveEnd → flushSync(dropAnimationFinishedAction)
-            // → DROP_COMPLETE → onDragEnd. Suppressing the transition with 'none'
-            // here kills that event chain and onDragEnd never fires.
-            transition: (snapshot.isDragging && !snapshot.isDropAnimating)
-              ? 'none'
-              : [provided.draggableProps.style?.transition, 'background 0.15s, border-top-color 0.15s, border-right-color 0.15s, border-bottom-color 0.15s'].filter(Boolean).join(', '),
-            boxShadow: snapshot.isDragging
-              ? `0 8px 24px rgba(0,0,0,0.5), 0 0 0 1px ${priorityColor}22`
-              : 'none',
-            transform: snapshot.isDragging
-              ? `${provided.draggableProps.style?.transform || ''} rotate(1.5deg)`
-              : provided.draggableProps.style?.transform,
-          }}
-          onMouseOver={e => {
-            if (!snapshot.isDragging) {
-              e.currentTarget.style.background = 'var(--surface-3)';
-              e.currentTarget.style.borderTopColor    = 'var(--border-2)';
-              e.currentTarget.style.borderRightColor  = 'var(--border-2)';
-              e.currentTarget.style.borderBottomColor = 'var(--border-2)';
-            }
-          }}
-          onMouseOut={e => {
-            if (!snapshot.isDragging) {
-              e.currentTarget.style.background = 'var(--surface-2)';
-              e.currentTarget.style.borderTopColor    = 'var(--border)';
-              e.currentTarget.style.borderRightColor  = 'var(--border)';
-              e.currentTarget.style.borderBottomColor = 'var(--border)';
-            }
-          }}
-        >
+      {(provided, snapshot) => {
+        const card = (
+          <div
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            onClick={() => onClick(ticket)}
+            style={{
+              ...provided.draggableProps.style,
+              marginBottom: 6,
+              background: snapshot.isDragging ? 'var(--surface-3)' : 'var(--surface-2)',
+              borderTop:    `1px solid ${snapshot.isDragging ? 'var(--border-2)' : 'var(--border)'}`,
+              borderRight:  `1px solid ${snapshot.isDragging ? 'var(--border-2)' : 'var(--border)'}`,
+              borderBottom: `1px solid ${snapshot.isDragging ? 'var(--border-2)' : 'var(--border)'}`,
+              borderLeft:   `3px solid ${priorityColor}`,
+              borderRadius: 8,
+              padding: '10px 12px',
+              cursor: 'pointer',
+              // isDragging is true for BOTH active-drag AND drop-animating phases.
+              // During drop-animating the library relies on the CSS transform
+              // transition firing transitionend → onMoveEnd → flushSync(dropAnimationFinishedAction)
+              // → DROP_COMPLETE → onDragEnd. Suppressing the transition with 'none'
+              // here kills that event chain and onDragEnd never fires.
+              transition: (snapshot.isDragging && !snapshot.isDropAnimating)
+                ? 'none'
+                : [provided.draggableProps.style?.transition, 'background 0.15s, border-top-color 0.15s, border-right-color 0.15s, border-bottom-color 0.15s'].filter(Boolean).join(', '),
+              boxShadow: snapshot.isDragging
+                ? `0 8px 24px rgba(0,0,0,0.5), 0 0 0 1px ${priorityColor}22`
+                : 'none',
+              transform: snapshot.isDragging
+                ? `${provided.draggableProps.style?.transform || ''} rotate(1.5deg)`
+                : provided.draggableProps.style?.transform,
+            }}
+            onMouseOver={e => {
+              if (!snapshot.isDragging) {
+                e.currentTarget.style.background = 'var(--surface-3)';
+                e.currentTarget.style.borderTopColor    = 'var(--border-2)';
+                e.currentTarget.style.borderRightColor  = 'var(--border-2)';
+                e.currentTarget.style.borderBottomColor = 'var(--border-2)';
+              }
+            }}
+            onMouseOut={e => {
+              if (!snapshot.isDragging) {
+                e.currentTarget.style.background = 'var(--surface-2)';
+                e.currentTarget.style.borderTopColor    = 'var(--border)';
+                e.currentTarget.style.borderRightColor  = 'var(--border)';
+                e.currentTarget.style.borderBottomColor = 'var(--border)';
+              }
+            }}
+          >
           {/* Ticket ID + priority badge */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
             <span style={{
@@ -150,7 +151,13 @@ export default function TicketCard({ ticket, index, onClick }) {
             </div>
           )}
         </div>
-      )}
+        );
+
+        if (snapshot.isDragging) {
+          return createPortal(card, document.body);
+        }
+        return card;
+      }}
     </Draggable>
   );
 }
