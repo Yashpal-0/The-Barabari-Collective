@@ -88,7 +88,7 @@ describe('runInDocker', () => {
     jest.advanceTimersByTime(5000);
     const result = await promise;
 
-    expect(child.kill).toHaveBeenCalledWith('SIGTERM');
+    expect(child.kill).toHaveBeenCalledWith('SIGKILL');
     expect(result.timedOut).toBe(true);
     expect(result.output).toBe('');
 

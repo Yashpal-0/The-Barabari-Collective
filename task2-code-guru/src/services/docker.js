@@ -12,10 +12,12 @@ async function runInDocker({ language, code }) {
   if (!config) throw new Error(`Unsupported language: ${language}`);
 
   const start = Date.now();
+  const containerName = `cg-exec-${Math.random().toString(36).substring(2, 12)}`;
 
   return new Promise((resolve) => {
     const child = spawn('docker', [
       'run', '--rm',
+      '--name', containerName,
       '--network', 'none',
       '--memory', '64m',
       '--cpus', '0.5',
@@ -36,7 +38,9 @@ async function runInDocker({ language, code }) {
     let timedOut = false;
     const timer = setTimeout(() => {
       timedOut = true;
-      child.kill('SIGTERM');
+      child.kill('SIGKILL');
+      // Asynchronously force-remove the container on the docker daemon to free up resources
+      spawn('docker', ['rm', '-f', containerName]);
     }, TIMEOUT_MS);
 
     child.on('close', (exitCode) => {
